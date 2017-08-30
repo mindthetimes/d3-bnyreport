@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+  <script src="d3.v3.min.js"></script> <!-- d3.js -->
+  <script src="jquery-2.1.4.min.js"></script> <!-- jquery -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script> <!-- bootstrap -->
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-MfvZlkHCEqatNoGiOXveE8FIwMzZg4W85qfrfIFBfYc= sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous"> <!-- bootstrap css -->
+  <style>
+      body {
+        overflow:hidden;
+         margin:0;
+         background-color: #eaeaea;
+      }
+
+      text {
+        font-family: 'Roboto', sans-serif;
+        pointer-events: none;
+      }
+
+     .tooltip {
+        position: absolute;
+        padding: 6px 10px 6px 10px;
+        width: auto;
+        height: auto;
+        padding: 10px;
+        border-radius: 8px;
+        display: none;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .tipName {
+        font-family: 'Roboto', sans-serif;
+        font-size: 12px;
+        color: #fff;
+      }
+
+      .tooltip.hidden {
+        display: none;
+      }
+
+      .tooltip p {
+        margin: 0;
+        font-family: 'Roboto', Helvetica, Arial, sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+      }
+
+    .viz-title {
+      font-family: 'Roboto', Helvetica, Arial, sans-serif;
+      font-weight: 700;
+      font-size: 24px;
+      position: absolute;
+      top: 45px;
+      left: 20px;
+    }
+
+    .copyright-label {
+      top: 50px;
+      left: 20px;
+      position: absolute;
+      font-family: 'Roboto', Helvetica, Arial, sans-serif;
+      font-size: 12px;
+    }
+
+    .btn-default {
+      background-color: #fff!important;
+      color: #000!important;
+    }
+
+
+    #tip-info {
+      font-family: 'Roboto', Helvetica, Arial, sans-serif;
+      top: 20px;
+      position: absolute;
+      left: 160px;
+    }
+    
+    #circ-info {
+      font-family: 'Roboto', Helvetica, Arial, sans-serif;
+      top: 20px;
+      position: absolute;
+      left: 20px;
+    }
+
+    #link-info {
+      font-family: 'Roboto', Helvetica, Arial, sans-serif;
+      top: 20px;
+      position: absolute;
+      left: 303px;
+    }
+
+    .nudge-down {
+      top: 70px;
+    }
+
+    .nudge-down2 {
+      top: 95px;
+    }
+  </style>
+
+
+
+</head>
+<body>
+
+ <div id="circ-info" class="dropdown">
+    <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">Circle Size Info
+    <span class="caret"></span></button>
+    <ul class="dropdown-menu">
+      <li><a href="deposit.html">Deposits</a></li>
+      <li><a href="withdraw.html">Withdrawals</a></li>
+      <li><a href="encashment.html">Encashment</a></li>
+      <li><a href="accounttransfer.html">Account Transfer</a></li>
+      <li><a href="debit.html">Debit Memo</a></li>
+      <li><a href="credit.html">Credit Memo</a></li>
+      <li class="active"><a href="off.html">Circle Size Off</a></li>
+    </ul>
+  </div>
+
+  <div>
+  <div id="tip-info" class="dropdown">
+    <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">Mouseover Info
+    <span class="caret"></span></button>
+    <ul class="dropdown-menu">
+      <li class="tb active"><a href="" class="tip-button" data-val="-1">Show Transactions</a></li>
+      <li class="tb"><a href="" class="tip-button" data-val="1">Show Descriptions</a></li>
+      <li class="tb"><a href="" class="tip-button" data-val="0">Hide Mouseover Info</a></li>
+    </ul>
+  </div>
+
+  <div id="link-info" class="dropdown">
+    <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">Link Info
+    <span class="caret"></span></button>
+    <ul class="dropdown-menu">
+      <li class="ls"><a href="" class="link-status" data-val="ja">Joint Accounts</a></li>
+      <li class="ls"><a href="" class="link-status" data-val="fr">Family Relations</a></li>
+      <li class="ls"><a href="" class="link-status" data-val="co">Officer or Incorporator of Company</a></li>
+      <li class="ls"><a href="" class="link-status" data-val="be">Beneficiary</a></li>
+      <li class="ls"><a href="" class="link-status" data-val="show">Show All</a></li>
+      <li class="ls active"><a href="" class="link-status" data-val="hide">Hide All</a></li>
+    </ul>
+  </div>
+
+  <div class="tooltip-stat" data-status="-1"></div>
+    <h2 class="viz-title"><span style="font-size: 14px">Circle Size:</span> OFF</h2>
+    <h2 class="viz-title nudge-down"><span style="font-size: 14px; margin-right: 7px;">Mouseover Info:</span><span class="tip-title">TRANSACTIONS</span></h2>
+    <h2 class="viz-title nudge-down2"><span style="font-size: 14px; margin-right: 17px;">Link Info:</span><span class="link-title">HIDDEN</span></h2>
+  </div>
+
+<script>
+  /* DATA VISUALIZATION CODED BY DATASEER INC. */
+
+  /* Dropdown for tooltip status */
+  $('.tip-button').on('click', function(e) {
+      e.preventDefault();
+
+      var title = $(this).text();
+      
+      if (title == "Show Transactions") {
+        title = "Transactions".toUpperCase();
+      }
+      if (title == "Show Descriptions") {
+        title = "Descriptions".toUpperCase();
+      }
+      if (title == "Hide Mouseover Info") {
+        title = "Hidden".toUpperCase();
+      }
+      $('.tip-title').text(title);
+
+      var val = $(this).data('val');
+      $('.tb').removeClass('active');
+      $(this).closest('li').addClass('active');
+      $('.tooltip-stat').attr('data-status', val);
+  });
+
+  /* Dropdown for link status */
+  $('.link-status').on('click', function(e) {
+    e.preventDefault();
+    var title = $(this).text();
+    
+    if (title == "Hide All") {
+      title = "Hidden".toUpperCase();
+    }
+    if (title == "Show All") {
+      title = "All Links".toUpperCase();
+    }
+    if (title == "Officer or Incorporator of Company") {
+      title = "Officer/Incorporator of Company".toUpperCase();
+    }
+    $('.link-title').text(title.toUpperCase());
+      var val = $(this).data('val');
+      $('.ls').removeClass('active');
+      $(this).closest('li').addClass('active');
+  });
+
+  /* Variables */
+  var w = window.innerWidth;
+      h = window.innerHeight;
+
+  var focus_node = null,
+      highlight_node = null;
+  var text_center = false;
+  var outline = false;
+
+  // color of circles
+  var color = d3.scale.linear()
+      .domain([-1, 0, 1])
+      .range(["#8562af", "#e73929", "#304269"]); // if score = -1 company; 0 = individual, 1 = binay
+
+  // color of links
+  var family = d3.scale.linear()
+      .domain([-1, 0, 1])
+      .range(["#fa4040", "#1fbcfd", "#acd759"]); // if score = -1, beneficiary link; if score = 0, company link; if 1 = family link
+
+  // var highlight_color = "#304269"; // stroke on mouseover 
+  var highlight_trans = 0.1;
+
+  var size = d3.scale.pow().exponent(1)
+      .domain([1, 100])
+      .range([8, 24]);
+
+  var force = d3.layout.force()
+      .gravity(0.1)
+      .charge(-400)
+      .size([w, h])
+      .linkDistance(200)
+      .friction(0.9)
+      .theta(0.9)
+      .alpha(1.1);
+
+
+  var default_node_color = "#aaa";
+  var default_link_color = "#9a9a9a"; // all other links 
+  var nominal_base_node_size = 8;
+  var nominal_text_size = 10;
+  var max_text_size = 36;
+  var nominal_stroke = 2.5;
+  var max_stroke = 6.5;
+  var max_base_node_size = 36;
+  var min_zoom = 0.1;
+  var max_zoom = 7;
+  var svg = d3.select("body").append("svg").attr("class", "svg");
+  var zoom = d3.behavior.zoom().scaleExtent([min_zoom, max_zoom]);
+
+  /* tooltip variables */
+  var g = svg.append("g");
+  svg.style("cursor", "move");
+
+  var div = d3.select("body").append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+  var tipName = d3.select(".tooltip").append("div")
+      .attr("class", "tipName");
+
+
+  /* start data.json */
+  d3.json("data.json", function(error, graph) {
+
+      var linkedByIndex = {};
+      graph.links.forEach(function(d) {
+          linkedByIndex[d.source + "," + d.target] = true;
+      });
+
+      function isConnected(a, b) {
+          return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
+      }
+
+      function hasConnections(a) {
+          for (var property in linkedByIndex) {
+              s = property.split(",");
+              if ((s[0] == a.index || s[1] == a.index) && linkedByIndex[property]) return true;
+          }
+          return false;
+      }
+
+      force
+          .nodes(graph.nodes)
+          .links(graph.links)
+          .start();
+
+           var link = g.selectAll(".link")
+          .data(graph.links)
+          .enter().append("line")
+          .attr("class", "link")
+          .style("stroke-width", nominal_stroke)
+          .style("stroke", function(d) {
+              if (isNumber(d.score)) return family(d.score);
+              else return default_link_color;
+          })
+          .style("stroke-opacity", 0); 
+
+
+      $('.link-status').on('click', function(){
+        link.style("stroke-opacity", function(d) {
+        var val = $('li.active .link-status').data('val');        
+
+
+          if(val == 'ja') {
+            if (d.score === null) return 1;
+            else return 0;
+          }
+          if(val == 'fr') {
+            if (d.score === 1) return 0.75;
+            else return 0;
+       
+          }
+          if(val == 'co') {
+            if (d.score === 0) return 0.75;
+            else return 0;
+            
+          }
+          if(val == 'be') {
+            if (d.score === -1) return 0.75;
+            else return 0;
+        
+          }
+          if(val == 'show') {
+             if (d.score === 1) return 0.75;
+                else if (d.score === 0) return 0.75;
+                else if (d.score === -1) return 0.75;
+                else return 1;
+          }
+
+          if(val == 'hide') {
+            return 0;
+          }
+
+  
+        }); 
+      });
+
+      var node = g.selectAll(".node")
+          .data(graph.nodes)
+          .enter().append("g")
+          .attr("class", "node")
+          .call(force.drag);
+
+      /* Double-click zoom */
+      node.on("dblclick.zoom", function(d) {
+          d3.event.stopPropagation();
+          var dcx = (window.innerWidth / 2 - d.x * zoom.scale());
+          var dcy = (window.innerHeight / 2 - d.y * zoom.scale());
+          zoom.translate([dcx, dcy]);
+          g.attr("transform", "translate(" + dcx + "," + dcy + ")scale(" + zoom.scale() + ")");
+
+      });
+
+      /* circle colors */
+      var tocolor = "fill";
+      var towhite = "stroke";
+      if (outline) {
+          tocolor = "stroke"
+          towhite = "fill"
+      }
+
+
+      var circle = node.append("path")
+
+      .attr("d", d3.svg.symbol()
+          .size(function(d) {
+              return Math.PI * Math.pow(size(d.defaultSize) || nominal_base_node_size, 2);
+          })
+          .type(function(d) {
+              return d.type;
+          }))
+
+      .style(tocolor, function(d) {
+              if (isNumber(d.score)) return color(d.score);
+              else return default_node_color;
+          })
+          //.attr("r", function(d) { return size(d.defaultSize)||nominal_base_node_size; })
+          .style("stroke-width", nominal_stroke)
+          .style(towhite, "white");
+
+      var text = g.selectAll(".text")
+          .data(graph.nodes)
+          .enter().append("text")
+          .attr("dy", ".35em")
+          .style("font-size", nominal_text_size + "px")
+
+      if (text_center)
+          text.text(function(d) {
+              return d.id;
+          })
+          .style("text-anchor", "middle");
+      else
+          text.attr("dx", function(d) {
+              return (size(d.defaultSize) || nominal_base_node_size);
+          })
+          .text(function(d) {
+              return '\u2002' + d.id;
+          });
+
+      node.on("mouseover", function(d) {
+          // set_highlight(d) // highlight off
+          
+          /* Tooltip Mouseover */
+          var ts = $('.tooltip-stat').attr('data-status');
+          if (ts == 1) { // if 1 show Description tooltips
+
+              var $desc1 = (d.desc1 == 0 || d.desc1 == 'NA') ? '' : '- ' + d.desc1 + "<br/>";
+              var $desc2 = (d.desc2 == 0 || d.desc2 == 'NA') ? '' : '- ' + d.desc2 + "<br/>";
+              var $desc3 = (d.desc3 == 0 || d.desc3 == 'NA') ? '' : '- ' + d.desc3 + "<br/>";
+              var $desc4 = (d.desc4 == 0 || d.desc4 == 'NA') ? '' : '- ' + d.desc4 + "<br/>";
+              var $desc5 = (d.desc5 == 0 || d.desc5 == 'NA') ? '' : '- ' + d.desc5 + "<br/>";
+              var $desc6 = (d.desc6 == 0 || d.desc6 == 'NA') ? '' : '- ' + d.desc6 + "<br/>";
+              var $desc7 = (d.desc7 == 0 || d.desc7 == 'NA') ? '' : '- ' + d.desc7 + "</i>";
+
+              var desc = "<b>" + d.id.toUpperCase() + "</b> <br/> <i>" + $desc1 + $desc2 + $desc3 + $desc4 + $desc5 + $desc6 + $desc7;
+
+              div.transition()
+                  .duration(100)
+                  .style("opacity", 0)
+                  .transition()
+                  .duration(250)
+                  .style("display", "block")
+                  .style("background-color", "black")
+                  .style("opacity", 0.8);
+              tipName.html(desc);
+          } else if (ts == -1) { // if -1 show Transaction tooltips
+
+              var $numAccts = (d.numAccts == 0 || d.numAccts == 'NA') ? '' : 'No. of Bank Accounts: <b>' + d.numAccts + '</b> <br/>';
+              var $numLinks = (d.numLinks == 0 || d.numLinks == 'NA') ? '' : 'No. of Bank Account Co-owners: <b>' + d.numLinks + '</b> <br/>';
+              var $deposit = (d.deposit == 0 || d.deposit == 'NA') ? '' : 'Deposit:<b> P' + d.deposit + ' million' + ' </b> <br/>';
+              var $withdrawal = (d.withdrawal == 0 || d.withdrawal == 'NA') ? '' : 'Withdrawal:<b> P' + d.withdrawal + ' million' + '</b> <br/>';
+              var $encashment = (d.encashment == 0 || d.encashment == 'NA') ? '' : 'Encashment:<b> P' + d.encashment + ' million' + '</b> <br/>';
+              var $accountTransfer = (d.accountTransfer == 0 || d.accountTransfer == 'NA') ? '' : 'Account Transfer:<b> P' + d.accountTransfer + ' million' + '</b> <br/>';
+              var $debit = (d.debitMemo == 0 || d.debitMemo == 'NA') ? '' : 'Debit Memo:<b> P' + d.debitMemo + ' million' + '</b> <br/>';
+              var $credit = (d.creditMemo == 0 || d.creditMemo == 'NA') ? '' : 'Credit Memo:<b> P' + d.creditMemo + ' million' + '</b> <br/>';
+
+              var trans = "<b>" + d.id.toUpperCase() + "</b> <br/>" + $numAccts + $numLinks + $deposit + $withdrawal + $encashment + $accountTransfer + $debit + $credit;
+
+              div.transition()
+                  .duration(100)
+                  .style("opacity", 0)
+                  .transition()
+                  .duration(250)
+                  .style("display", "block")
+                  .style("background-color", "black")
+                  .style("opacity", 0.8);
+              tipName.html(trans);
+          }
+
+      })
+
+      /* Tooltip Mousemove */
+      .on("mousemove", function(d) {
+          div.style("top", (d3.event.pageY - 10) + "px").style("left", (d3.event.pageX + 20) + "px");
+      })
+
+      /* Mousedown Focus */
+      .on("mousedown", function(d) {
+          d3.event.stopPropagation();
+          focus_node = d;
+          set_focus(d)
+          if (highlight_node === null) set_highlight(d)
+
+      /* Exit Tooltip */
+      }).on("mouseout", function(d) {
+          // exit_highlight()
+          // tooltip hide
+          div.transition(200)
+          .style("opacity", 0);
+      });
+
+      d3.select(window).on("mouseup",
+          function() {
+              if (focus_node !== null) {
+                  focus_node = null;
+                  if (highlight_trans < 1) {
+
+                      circle.style("opacity", 1);
+                      text.style("opacity", 1);
+                      link.style("opacity", 1);
+                  }
+              }
+
+              if (highlight_node === null) exit_highlight();
+          }); 
+
+      function exit_highlight() {
+          highlight_node = null;
+          if (focus_node === null) {
+              svg.style("cursor", "move");
+              if (highlight_color != "white") {
+                  circle.style(towhite, "white");
+                  text.style("font-weight", "normal");
+                  link.style("stroke", function(o) {
+                      return (isNumber(o.score)) ? family(o.score) : default_link_color
+                  });
+              }
+
+          }
+      }
+
+      function set_focus(d) {
+          if (highlight_trans < 1) {
+              circle.style("opacity", function(o) {
+                  return isConnected(d, o) ? 1 : highlight_trans;
+              });
+
+              text.style("opacity", function(o) {
+                  return isConnected(d, o) ? 1 : highlight_trans;
+              });
+
+              link.style("opacity", function(o) {
+                  return o.source.index == d.index || o.target.index == d.index ? 1 : highlight_trans;
+              });
+          }
+      }
+
+
+      function set_highlight(d) {
+          svg.style("cursor", "pointer");
+          if (focus_node !== null) d = focus_node;
+          highlight_node = d;
+
+          if (highlight_color != "white") {
+              circle.style(towhite, function(o) {
+                  return isConnected(d, o) ? highlight_color : "white";
+              });
+              text.style("font-weight", function(o) {
+                  return isConnected(d, o) ? "bold" : "normal";
+              });
+              link.style("stroke", function(o) {
+                  return o.source.index == d.index || o.target.index == d.index ? highlight_color : ((isNumber(o.score)) ? family(o.score) : default_link_color);
+
+              });
+          }
+      }
+
+
+      zoom.on("zoom", function() {
+
+          var stroke = nominal_stroke;
+          if (nominal_stroke * zoom.scale() > max_stroke) stroke = max_stroke / zoom.scale();
+          link.style("stroke-width", stroke);
+          circle.style("stroke-width", stroke);
+
+          var base_radius = nominal_base_node_size;
+          if (nominal_base_node_size * zoom.scale() > max_base_node_size) base_radius = max_base_node_size / zoom.scale();
+          circle.attr("d", d3.svg.symbol()
+              .size(function(d) {
+                  return Math.PI * Math.pow(size(d.defaultSize) * base_radius / nominal_base_node_size || base_radius, 2);
+              })
+              .type(function(d) {
+                  return d.type;
+              }))
+
+          //circle.attr("r", function(d) { return (size(d.defaultSize)*base_radius/nominal_base_node_size||base_radius); })
+          if (!text_center) text.attr("dx", function(d) {
+              return (size(d.defaultSize) * base_radius / nominal_base_node_size || base_radius);
+          });
+
+          var text_size = nominal_text_size;
+          if (nominal_text_size * zoom.scale() > max_text_size) text_size = max_text_size / zoom.scale();
+          text.style("font-size", text_size + "px");
+
+          g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+      });
+
+      svg.call(zoom);
+
+      resize();
+      //window.focus();
+      d3.select(window).on("resize", resize).on("keydown", keydown);
+
+      force.on("tick", function() {
+
+          node.attr("transform", function(d) {
+              return "translate(" + d.x + "," + d.y + ")";
+          });
+          text.attr("transform", function(d) {
+              return "translate(" + d.x + "," + d.y + ")";
+          });
+
+          link.attr("x1", function(d) {
+                  return d.source.x;
+              })
+              .attr("y1", function(d) {
+                  return d.source.y;
+              })
+              .attr("x2", function(d) {
+                  return d.target.x;
+              })
+              .attr("y2", function(d) {
+                  return d.target.y;
+              });
+
+          node.attr("cx", function(d) {
+                  return d.x;
+              })
+              .attr("cy", function(d) {
+                  return d.y;
+              });
+      });
+
+      function resize() {
+          var width = window.innerWidth,
+              height = window.innerHeight;
+          svg.attr("width", width).attr("height", height);
+
+          force.size([force.size()[0] + (width - w) / zoom.scale(), force.size()[1] + (height - h) / zoom.scale()]).resume();
+          w = width;
+          h = height;
+      }
+
+      function keydown() {
+          if (d3.event.keyCode == 32) {
+              force.stop();
+          } else if (d3.event.keyCode >= 48 && d3.event.keyCode <= 90 && !d3.event.ctrlKey && !d3.event.altKey && !d3.event.metaKey) {
+              
+              link.style("display", function(d) {
+                  var flag = vis_by_type(d.source.type) && vis_by_type(d.target.type) && vis_by_node_score(d.source.score) && vis_by_node_score(d.target.score) && vis_by_link_score(d.score);
+                  linkedByIndex[d.source.index + "," + d.target.index] = flag;
+                  return flag ? "inline" : "none";
+              });
+              node.style("display", function(d) {
+                  return (key0 || hasConnections(d)) && vis_by_type(d.type) && vis_by_node_score(d.score) ? "inline" : "none";
+              });
+              text.style("display", function(d) {
+                  return (key0 || hasConnections(d)) && vis_by_type(d.type) && vis_by_node_score(d.score) ? "inline" : "none";
+              });
+
+              if (highlight_node !== null) {
+                  if ((key0 || hasConnections(highlight_node)) && vis_by_type(highlight_node.type) && vis_by_node_score(highlight_node.score)) {
+                      if (focus_node !== null) set_focus(focus_node);
+                      set_highlight(highlight_node);
+                  } else {
+                      exit_highlight();
+                  }
+              }
+
+          }
+      }
+
+  });
+
+
+  function vis_by_type(type) {
+      switch (type) {
+          case "circle":
+              return keyc;
+          case "square":
+              return keys;
+          case "triangle-up":
+              return keyt;
+          case "diamond":
+              return keyr;
+          case "cross":
+              return keyx;
+          case "triangle-down":
+              return keyd;
+          default:
+              return true;
+      }
+  }
+
+  function vis_by_node_score(score) {
+      if (isNumber(score)) {
+          if (score >= 0.666) return keyh;
+          else if (score >= 0.333) return keym;
+          else if (score >= 0) return keyl;
+      }
+      return true;
+  }
+
+  function vis_by_link_score(score) {
+      if (isNumber(score)) {
+          if (score >= 0.666) return key3;
+          else if (score >= 0.333) return key2;
+          else if (score >= 0) return key1;
+      }
+      return true;
+  }
+
+  function isNumber(n) {
+      return !isNaN(parseFloat(n)) && isFinite(n);
+  }
+
+</script>
+</body>
